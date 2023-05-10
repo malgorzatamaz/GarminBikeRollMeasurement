@@ -1,10 +1,3 @@
 <strings>
-    <string id="AppName">Corner Angle</string>
-    <string id="x">x: </string>
-    <string id="y">y: </string>
-    <string id="z">z: </string>
-    <string id="roll">Roll: </string>
-    <string id="activity">Activity</string>
-    <string id="inprogress">in progress</string>
-    <string id="notstarted">not started</string>
+    <string id="AppName">Cornering tilt</string>
 </strings>

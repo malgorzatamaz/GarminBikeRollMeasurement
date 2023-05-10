@@ -1,1 +1,1 @@
-# GarminBikeRollMeasurement
+# Cornering tilt measurement app

@@ -1,9 +1,10 @@
 <layout id="MainLayout">
-    <!-- <label x="center" y="5" text="@Strings.x" color="Graphics.COLOR_BLACK" />
-    <label x="center" y="5" text="@Strings.y" color="Graphics.COLOR_BLACK" />
-    <label x="center" y="5" text="@Strings.z" color="Graphics.COLOR_BLACK" /> -->
-    <label x="15" y="50" text="@Strings.roll" color="Graphics.COLOR_WHITE" />
-    <label x="15" y="70" id="Roll" color="Graphics.COLOR_WHITE" />
-    <label x="15" y="100" text="@Strings.activity" color="Graphics.COLOR_WHITE" />
-    <label x="15" y="120" id="Activity" color="Graphics.COLOR_WHITE" />
+    <label x="70" y="10" text="Angle" color="Graphics.COLOR_WHITE" />
+    <label x="70" y="40" text="-" id="Angle" color="Graphics.COLOR_WHITE" />
+
+    <label x="70" y="80" text="Max angle" color="Graphics.COLOR_WHITE" />
+    <label x="70" y="110" text="-" id="MaxAngle" color="Graphics.COLOR_WHITE" />
+
+    <label x="70" y="150" text="Recording" color="Graphics.COLOR_WHITE" />
+    <label x="70" y="180" id="Activity" color="Graphics.COLOR_WHITE" />
 </layout>

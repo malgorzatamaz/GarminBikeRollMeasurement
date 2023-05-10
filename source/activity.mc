@@ -4,96 +4,122 @@ using Toybox.ActivityRecording;
 using Toybox.Activity;
 using Toybox.Math;
 using Toybox.Lang;
+using Toybox.Position;
 
 class Activity {
-  var activity;
-  var data;
   var isRecording = false;
-  // var dataTimer;
+  var allValues as Lang.Array = [];
+  var values as Lang.Array = [];
+  var SAMPLE_RATE = 10;
+  var speed = 0;
+  var position = {};
 
-  // function initalize() {
-  //   dataTimer = new Timer.Timer();
-  // }
+  function getMaxValue(array as Lang.Array<Lang.Float>) {
+    var max = 0;
+    for (
+      var i = array.size() > 200 ? array.size() - 150 : 0;
+      i < array.size();
+      i++
+    ) {
+      var newMax = array[i].abs();
+      if (newMax > max) {
+        max = newMax;
+      }
+    }
 
-  function accelCallback(sensorData as Sensor.SensorData) as Void {
-    var roll = sensorData.accelerometerData.roll; //.toDouble();
-    var x = sensorData.accelerometerData.x; //.toDouble();
-    var y = sensorData.accelerometerData.y; //.toDouble();
-    // var y = sensorData.accelerometerData.y[0].toDouble();
-    // System.println("x: " + xAccel + ", y: " + yAccel);
-
-    // var roll = Math.atan2(y, x) * 57.29;
-    // data = sensorData.accelerometerData.roll;
-    // data = Sensor.Info.speed;
-    System.println("x: " + x.toString() + ", y: " + y.toString());
-    System.println("roll: " + roll.toString());
-    data = 180 - roll[0].abs();
+    return max;
   }
 
-  // function timerCallback() {
-  //   var sensorInfo = Sensor.getInfo();
-  //   if (sensorInfo has :accel && sensorInfo.accel != null) {
-  //     var accel = sensorInfo.accel;
-  //     var xAccel = accel[0];
-  //     var yAccel = accel[1];
-  //     var roll = Math.atan2(yAccel, xAccel) * 57.29;
-  //     // data = sensorData.accelerometerData.roll;
-  //     // data = Sensor.Info.speed;
-  //     data = roll;
-  //     System.println("x: " + xAccel + ", y: " + yAccel);
-  //   }
-  // }
+  function getAngle() as Lang.Array<Lang.Number> {
+    return values;
+  }
 
-  function getData() {
-    return data;
+  function getMaxAngle() {
+    return getMaxValue(allValues);
+  }
+
+  function getCurrentMaxAngle() {
+    return getMaxValue(values);
+  }
+
+  function getSpeed() {
+    return speed;
+  }
+
+  function getPosition() {
+    return position;
   }
 
   function startActivity() {
-    // var mLogger = SensorLogging.SensorLogger.initialize({
-    //   :accelerometer => {
-    //     :enabled => true,
-    //   },
-    // });
-
-    // activity = ActivityRecording.createSession({
-    //   :name => "PitchCounter",
-    //   :sport => Activity.SPORT_GENERIC,
-    //   // :sensorLogger => mLogger,
-    // });
-
-    // activity = ActivityRecording.createSession({
-    //   :name => "Race", // set session name
-    //   :sport => Activity.SPORT_GENERIC, // set sport type
-    //   :subSport => Activity.SUB_SPORT_GENERIC, // set sub sport type
-    // });
-
-    // initialize accelerometer
-
-    // dataTimer.start(method(:timerCallback), 500, true);
     var options = {
       :period => 1, // 1 second sample time
       :accelerometer => {
-        :includeRoll => true,
+        :includeRoll => true, // Include roll values
         :enabled => true, // Enable the accelerometer
-        :sampleRate => 1, // 25 samples
+        :sampleRate => SAMPLE_RATE, // samples
       },
     };
-    // Using the callback setup in Toybox.SensorHistory.SensorData
-    Sensor.registerSensorDataListener(method(:accelCallback), options);
+
+    Position.enableLocationEvents(
+      Position.LOCATION_CONTINUOUS,
+      method(:onPosition)
+    );
+    Sensor.registerSensorDataListener(method(:onAccelCallback), options);
     isRecording = true;
-    // activity.start();
+  }
+
+  function onAccelCallback(sensorData as Sensor.SensorData) as Void {
+    var sensorValues = sensorData.accelerometerData.roll;
+
+    var speedInMetersPerSecond = Sensor.getInfo().speed;
+    if (speedInMetersPerSecond != null) {
+      speed = speedInMetersPerSecond * 3.6;
+    }
+
+    var tempValues = [];
+
+    var sum = 0;
+    var sumValues = [].addAll(sensorValues);
+    if (values.size() > 10) {
+      sumValues.addAll(values.slice(values.size() - 10, values.size()));
+    }
+    for (var i = 0; i < sensorValues.size(); i++) {
+      sum += sumValues[i];
+    }
+    var average = sum / sumValues.size();
+
+    for (var i = 0; i < sensorValues.size(); i++) {
+      if (180 - sensorValues[i].abs() > 60 || sensorValues[i] - average > 20) {
+        continue;
+      }
+
+      if (sensorValues[i] > 0) {
+        tempValues.add(180 - sensorValues[i]);
+      } else {
+        tempValues.add(-180 + sensorValues[i].abs());
+      }
+    }
+    values = tempValues;
+    allValues.addAll(tempValues);
+  }
+
+  function onPosition(info as Position.Info) as Void {
+    position = info.position.toDegrees();
   }
 
   function stopActivity() {
-    // dataTimer.stop();
-    // activity.stop();
-    isRecording = false;
     Sensor.unregisterSensorDataListener();
+    Position.enableLocationEvents(
+      Position.LOCATION_DISABLE,
+      method(:onPosition)
+    );
+    isRecording = false;
+    values = [];
+    allValues = [];
   }
 
   function isRunning() {
     return isRecording;
-    // return activity ? activity.isRecording() : false;
   }
 
   function onStartStop() {

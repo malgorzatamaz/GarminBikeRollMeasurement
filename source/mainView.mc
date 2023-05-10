@@ -1,9 +1,13 @@
 import Toybox.Graphics;
 import Toybox.WatchUi;
+import Toybox.Lang;
+
+using Toybox.Communications as Comm;
 
 class mainView extends WatchUi.View {
   var controller;
-  var rollLabel;
+  var angleLabel;
+  var maxAngleLabel;
   var activityStateLabel;
   var timer;
 
@@ -13,24 +17,34 @@ class mainView extends WatchUi.View {
     timer = new Timer.Timer();
   }
 
-  // Load your resources here
   function onLayout(dc as Dc) as Void {
     setLayout(Rez.Layouts.MainLayout(dc));
 
-    rollLabel = View.findDrawableById("Roll");
+    angleLabel = View.findDrawableById("Angle");
+    maxAngleLabel = View.findDrawableById("MaxAngle");
     activityStateLabel = View.findDrawableById("Activity");
   }
 
-  // Update the view
   function onUpdate(dc as Dc) as Void {
-    // Call the parent onUpdate function to redraw the layout
     View.onUpdate(dc);
     if (controller.isRunning()) {
-      var data = controller.getData();
-      rollLabel.setText(data ? data.toString() : "-");
-      activityStateLabel.setText("Recording");
+      var angleValues = controller.getAngle();
+      try {
+        if (angleValues.size() > 0) {
+          var angle = angleValues[0].abs().toLong();
+          angleLabel.setText(angle.toString() + " °");
+        } else {
+          angleLabel.setText("-");
+        }
+
+        var max = controller.getMaxAngle().toLong();
+        maxAngleLabel.setText(max != 0 ? max.toString() + "°" : "-");
+      } catch (e) {
+        System.println(e);
+      }
+      activityStateLabel.setText("Started");
     } else {
-      activityStateLabel.setText("Not recording");
+      activityStateLabel.setText("Paused");
     }
   }
 
